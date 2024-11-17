@@ -1,52 +1,78 @@
 import { Form, Row, Col, message } from "antd";
+
 import React from "react";
 import { showLoader } from "../redux/loaderSlice";
 import { useDispatch } from "react-redux";
-import { AddDoctor } from "../apicalls/docters";
+import {AddDoctor, CheckIfDoctorAccountIsApplied,GetDoctorById,UpdateDoctor} from "../apicalls/doctors";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+ 
 
 function DoctorForm() {
   const [days, setDays] = React.useState([]);
+  const [alreadyApplied, setAlreadyApplied] = React.useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user')) || {};
-const userId = user.id || null;
+  const user = JSON.parse(localStorage.getItem("user")) || {};
+  const userId = user.id || null;
 
-const onFinish = async (values) => {
+  const onFinish = async (values) => {
     try {
       dispatch(showLoader(true));
       const payload = {
-        ...values,   
-        days,      
-        userId    
+        ...values,
+        days,
+        userId,
+        status: "pending",
       };
-  
+
       const response = await AddDoctor(payload);
-  
+
       if (response.success) {
         message.success(response.message);
-        navigate('/profile');
+        navigate("/profile");
       } else {
         message.error(response.message);
       }
-  
     } catch (error) {
       message.error(error.message);
     } finally {
       dispatch(showLoader(false));
     }
   };
-  return (
-    <div className="bg-white p-2">
-      <h3 className="uppercase my-1">Apply For a Doctor!</h3>
-      <hr />
 
-      <Form
-        layout="vertical"
-        className="my-1"
-        onFinish={onFinish}
-        autoComplete="off"
-      >
+  const CheckifDoctorAccountIsApplied = async () => {
+    try {
+      dispatch(showLoader(true));
+      const response = await CheckifDoctorAccountIsApplied(userId);
+      if (response.success && response.data) {
+        setAlreadyApplied(true);
+      }  
+      dispatch(showLoader(false));
+    } catch (error) {
+      dispatch(showLoader(false));
+      message.error(error.message);
+    }  
+  };
+  
+  useEffect(() => {
+    CheckifDoctorAccountIsApplied();
+  }, []);
+
+
+return (
+  <div className="bg-white p-2">
+    {!alreadyApplied &&(
+      <>
+        <h3 className="uppercase my-1">Apply For a Doctor!</h3>
+        <hr />
+        <Form
+          layout="vertical"
+          className="my-1"
+          onFinish={onFinish}
+          autoComplete="off"
+        >
+
         <Row gutter={[16, 16]}>
           {/* Personal Information */}
           <Col span={24}>
@@ -98,7 +124,10 @@ const onFinish = async (values) => {
               name="phone"
               rules={[
                 { required: true, message: "Required Field" },
-                { pattern: /^[0-9]{10}$/, message: "Enter a valid 10-digit number" },
+                {
+                  pattern: /^[0-9]{10}$/,
+                  message: "Enter a valid 10-digit number",
+                },
               ]}
             >
               <input type="number" placeholder="Enter your phone number" />
@@ -120,15 +149,9 @@ const onFinish = async (values) => {
             <Form.Item
               label="Address"
               name="address"
-              rules={[
-                { required: true, message: "Required Field" },
-              ]}
+              rules={[{ required: true, message: "Required Field" }]}
             >
-              <textarea
-                type="text"
-                placeholder="Enter your address"
-                rows={3}
-              />
+              <textarea type="text" placeholder="Enter your address" rows={3} />
             </Form.Item>
           </Col>
           <Col span={24}>
@@ -145,9 +168,7 @@ const onFinish = async (values) => {
             <Form.Item
               label="Specialization"
               name="specialization"
-              rules={[
-                { required: true, message: "Required Field" },
-              ]}
+              rules={[{ required: true, message: "Required Field" }]}
             >
               <select>
                 <option value="">Select Specialization</option>
@@ -168,10 +189,7 @@ const onFinish = async (values) => {
             <Form.Item
               label="Experience (in years)"
               name="experience"
-              rules={[
-                { required: true, message: "Required Field" },
-           
-              ]}
+              rules={[{ required: true, message: "Required Field" }]}
             >
               <input type="number" placeholder="Enter years of experience" />
             </Form.Item>
@@ -181,9 +199,7 @@ const onFinish = async (values) => {
             <Form.Item
               label="Qualification"
               name="qualification"
-              rules={[
-                { required: true, message: "Required Field" },
-              ]}
+              rules={[{ required: true, message: "Required Field" }]}
             >
               <select>
                 <option value="">Select Qualification</option>
@@ -209,9 +225,7 @@ const onFinish = async (values) => {
             <Form.Item
               label="Start Time"
               name="startTime"
-              rules={[
-                { required: true, message: "Required Field" },
-              ]}
+              rules={[{ required: true, message: "Required Field" }]}
             >
               <input type="time" />
             </Form.Item>
@@ -220,9 +234,7 @@ const onFinish = async (values) => {
             <Form.Item
               label="End Time"
               name="endTime"
-              rules={[
-                { required: true, message: "Required Field" },
-              ]}
+              rules={[{ required: true, message: "Required Field" }]}
             >
               <input type="time" />
             </Form.Item>
@@ -231,10 +243,7 @@ const onFinish = async (values) => {
             <Form.Item
               label="Fee (in USD)"
               name="fee"
-              rules={[
-                { required: true, message: "Required Field" },
-              
-              ]}
+              rules={[{ required: true, message: "Required Field" }]}
             >
               <input type="number" placeholder="Enter consultation fee" />
             </Form.Item>
@@ -277,9 +286,22 @@ const onFinish = async (values) => {
             SUBMIT
           </button>
         </div>
-      </Form>
-    </div>
-  );
+        </Form>
+      </>
+    ) }
+    {alreadyApplied && (
+      <div className="flex flex-col items-center gap-2">
+        <h3 className="text-secondary">You have already applied for a doctor!</h3>
+        <p>
+          Please wait for the admin to approve your request. You can check the
+          status of your request in the profile section.
+         
+        </p>
+      </div>
+       ) }
+
+  </div>
+);
 }
 
 export default DoctorForm;
