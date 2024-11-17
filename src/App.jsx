@@ -7,6 +7,7 @@ import PrivateRoute from "./components/PrivateRoute";
 import Profile from "./pages/Profile";
 import Loader from "./components/Loader"; 
 import './index.css';
+import DoctorForm from "./pages/DoctorForm";
 
 function App() {
    const { isLoading } = useSelector((state) => state.loader);  
@@ -20,6 +21,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/" element={<PrivateRoute><Home/></PrivateRoute>} />
           <Route path="/profile" element={<PrivateRoute><Profile/></PrivateRoute>} />
+          <Route path='/apply-doctor' element={<PrivateRoute><DoctorForm/></PrivateRoute>}></Route>
         </Routes>
       </BrowserRouter>
     </div>

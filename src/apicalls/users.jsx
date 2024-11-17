@@ -41,7 +41,9 @@ export const loginUser = async (payload) => {
       throw new Error("User not found");
     }
  
+
     const user = userSnapshots.docs[0].data();
+    const id = userSnapshots.docs[0].id;
     const secretKey = import.meta.env.VITE_CRYPTO_SECRET_KEY;
     const bytes = CryptoJS.AES.decrypt(user.password,  secretKey);
     const originalPassword = bytes.toString(CryptoJS.enc.Utf8);
