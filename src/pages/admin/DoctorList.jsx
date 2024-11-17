@@ -1,37 +1,34 @@
 import { message, Table } from "antd";
 import React, { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { GetAllDoctors, UpdateDoctor  } from "../apicalls/doctors";
-import { ShowLoader } from "../redux/loaderSlice";
-import { useDispatch } from "react-redux";
-import { useEffect } from "react";
+import { GetAllDoctors, UpdateDoctor } from "../../apicalls/doctors";
+import {showLoader} from "../../redux/loaderSlice";
 
-
-function DoctorsList() {
+function DoctorList() {
   const [doctors, setDoctors] = React.useState([]);
 
   const dispatch = useDispatch();
   const getData = async () => {
     try {
-      dispatch(ShowLoader(true));
+      dispatch(showLoader(true));
       const response = await GetAllDoctors();
-      dispatch(ShowLoader(false));
+      dispatch(showLoader(false));
       if (response.success) {
         setDoctors(response.data);
       } else {
         throw new Error(response.message);
       }
     } catch (error) {
-      dispatch(ShowLoader(false));
+      dispatch(showLoader(false));
       message.error(error.message);
     }
   };
 
   const changeStatus = async (payload) => {
     try {
-      dispatch(ShowLoader(true));
+      dispatch(showLoader(true));
       const response = await UpdateDoctor(payload);
-      dispatch(ShowLoader(false));
+      dispatch(showLoader(false));
       if (response.success) {
         message.success(response.message);
         getData();
@@ -40,7 +37,7 @@ function DoctorsList() {
       }
     } catch (error) {
       message.error(error.message);
-      dispatch(ShowLoader(false));
+      dispatch(showLoader(false));
     }
   };
 
@@ -72,9 +69,9 @@ function DoctorsList() {
     {
       title: "Status",
       dataIndex: "status",
-      render : (text, record) => {
-        return text.toUpperCase()
-      }
+      render: (text, record) => {
+        return text.toUpperCase();
+      },
     },
     {
       title: "Actions",
@@ -154,4 +151,4 @@ function DoctorsList() {
   );
 }
 
-export default DoctorsList;
+export default DoctorList;

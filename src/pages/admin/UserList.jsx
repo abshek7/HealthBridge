@@ -2,25 +2,27 @@ import { message, Table } from "antd";
 import React, { useEffect } from "react";
 import { useDispatch } from "react-redux";
 
-import { GetAllUsers } from "../apicalls/users";
-import { ShowLoader } from "../redux/loaderSlice";
+import { GetAllUsers } from "../../apicalls/users";
+import {showLoader} from "../../redux/loaderSlice";
 
-function UsersList() {
+
+{/*redux guuva ki gulam sulam ki saalam */}
+function UserList() {
   const [users, setUsers] = React.useState([]);
 
   const dispatch = useDispatch();
   const getData = async () => {
     try {
-      dispatch(ShowLoader(true));
+      dispatch(showLoader(true));
       const response = await GetAllUsers();
-      dispatch(ShowLoader(false));
+      dispatch(showLoader(false));
       if (response.success) {
         setUsers(response.data);
       } else {
         throw new Error(response.message);
       }
     } catch (error) {
-      dispatch(ShowLoader(false));
+      dispatch(showLoader(false));
       message.error(error.message);
     }
   };
@@ -55,4 +57,4 @@ function UsersList() {
   );
 }
 
-export default UsersList;
+export default UserList;

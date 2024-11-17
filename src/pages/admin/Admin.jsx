@@ -1,10 +1,10 @@
 import React, { useEffect } from "react";
 import { message, Tabs } from "antd";
-import UsersList from "./UsersList";
-import DoctorsList from "./DoctorsList";
+import UserList from "./UserList";
+import DoctorList from "./DoctorList";
 import { useDispatch } from "react-redux";
-import { ShowLoader } from "../redux/loaderSlice";
-import { GetUserById } from "../apicalls/users";
+import  {showLoader } from "../../redux/loaderSlice";
+import { GetUserById } from "../../apicalls/users";
 
 function Admin() {
   const [isAdmin, setIsAdmin] = React.useState(false);
@@ -13,16 +13,16 @@ function Admin() {
 
   const checkIsAdmin = async () => {
     try {
-      dispatch(ShowLoader(true));
+      dispatch(showLoader(true));
       const response = await GetUserById(user.id);
-      dispatch(ShowLoader(false));
+      dispatch(showLoader(false));
       if (response.success && response.data.role === "admin") {
         setIsAdmin(true);
       } else {
         throw new Error("You are not an admin");
       }
     } catch (error) {
-      dispatch(ShowLoader(false));
+      dispatch(showLoader(false));
       message.error(error.message);
     }
   };
@@ -34,10 +34,10 @@ function Admin() {
     isAdmin && <div className="bg-white p-1">
       <Tabs>
         <Tabs.TabPane tab="Users" key="1">
-          <UsersList />
+          <UserList />
         </Tabs.TabPane>
         <Tabs.TabPane tab="Doctors" key="2">
-          <DoctorsList />
+          <DoctorList />
         </Tabs.TabPane>
       </Tabs>
     </div>
