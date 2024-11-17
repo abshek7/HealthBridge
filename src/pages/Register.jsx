@@ -2,13 +2,19 @@ import React, { useEffect } from 'react';
 import { Button, Form, Input, message } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import { createUser } from '../apicalls/users';
+import { useDispatch } from 'react-redux';
+import  {showLoader}  from '../redux/loaderSlice';
 
 function Register() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const onFinish = async (values) => {
     try {
+      dispatch(showLoader(true));   
       const response = await createUser(values);
+      dispatch(showLoader(false));  
+
       if (response.success) {
         message.success(response.message);
         navigate('/login');
@@ -16,13 +22,14 @@ function Register() {
         throw new Error(response.message);
       }
     } catch (error) {
+      dispatch(showLoader(false));   
       message.error(error.message);
     }
   };
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
-    if (user) navigate('/');
+    if (user) navigate('/');  
   }, [navigate]);
 
   return (
@@ -40,7 +47,7 @@ function Register() {
           <Input.Password />
         </Form.Item>
 
-        <button className='contained-btn my-1' type='submit'>  Register</button>
+        <button className='contained-btn my-1 w-full' type='submit'>Register</button>
  
         <Link to='/login' className='underline'>
           Already have an account? Login

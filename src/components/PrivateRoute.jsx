@@ -24,7 +24,7 @@ function PrivateRoute({ children }) {
         {user && (
           <div className="flex gap-3 items-center">
             <div className="flex gap-1 items-center">
-              <i class="ri-shield-user-line"></i>
+              <i className="ri-shield-user-line"></i>
               <h4
                 className="uppercase cursor-pointer underline"
                 onClick={() => navigate("/profile")}

@@ -2,36 +2,43 @@ import React, { useEffect } from 'react';
 import { Form, Input, Button, message } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import { loginUser } from '../apicalls/users';
+import { useDispatch } from 'react-redux';
+import { showLoader } from '../redux/loaderSlice';
 
 function Login() {
   const navigate = useNavigate();
-  useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user) {
-      navigate('/');   
-    }
-  }, [navigate]);
+  const dispatch = useDispatch();
 
   const onFinish = async (values) => {
     try {
+      dispatch(showLoader(true));
       const response = await loginUser(values);
+      dispatch(showLoader(false));
+
       if (response.success) {
         message.success(response.message);
         localStorage.setItem('user', JSON.stringify({ ...response.data, password: " " }));
         navigate('/');
       } else {
-        throw new Error(response.message);
+        message.error(response.message);
       }
     } catch (error) {
-      message.error(error.message);
+      dispatch(showLoader(false));
+      message.error('Something went wrong');
     }
   };
 
-  return (
-    <div className="flex justify-center items-center h-screen">
-      <Form layout="vertical" className="w-400 bg-white p-2" onFinish={onFinish}>
-        <h2 className="uppercase my-1">HealthBridge Login</h2>
+  useEffect(() => {
+    if (localStorage.getItem('user')) {
+      navigate('/');
+    }
+  }, [navigate]);
 
+  return (
+    <div className='flex justify-center items-center h-screen'>
+      <Form layout='vertical' className='w-400 bg-white p-2' onFinish={onFinish}>
+        <h2 className='uppercase my-1'>HealthBridge Register</h2>
+      
         <Form.Item label="Email" name="email">
           <Input type="email" />
         </Form.Item>
@@ -39,9 +46,11 @@ function Login() {
           <Input.Password />
         </Form.Item>
 
-        <button className='contained-btn my-1' type='submit'>  Login</button>
-
-        <Link to="/register" className="underline">Don't have an account? Signup</Link>
+        <button className='contained-btn my-1 w-full' type='submit'>Register</button>
+ 
+        <Link to='/register' className='underline'>
+          D'ont have an account? Signup
+        </Link>
       </Form>
     </div>
   );
