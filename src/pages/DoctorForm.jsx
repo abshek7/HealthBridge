@@ -1,283 +1,364 @@
 import { Form, Row, Col, message } from "antd";
 import React from "react";
-import { showLoader } from "../redux/loaderSlice";
+import  {showLoader}  from "../redux/loaderSlice";
 import { useDispatch } from "react-redux";
-import { AddDoctor } from "../apicalls/docters";
+import {AddDoctor, CheckIfDoctorAccountIsApplied,GetDoctorById,UpdateDoctor} from "../apicalls/doctors";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+ 
 
 function DoctorForm() {
+  const [form] = Form.useForm();
+  const [alreadyApproved, setAlreadyApproved] = React.useState(false);
   const [days, setDays] = React.useState([]);
+  const [alreadyApplied, setAlreadyApplied] = React.useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user')) || {};
-const userId = user.id || null;
-
-const onFinish = async (values) => {
+  const onFinish = async (values) => {
     try {
       dispatch(showLoader(true));
       const payload = {
-        ...values,   
-        days,      
-        userId    
+        ...values,
+        days,
+        userId: JSON.parse(localStorage.getItem("user")).id,
+        status: "pending",
+        role: "doctor",
       };
-  
-      const response = await AddDoctor(payload);
-  
+      let response = null;
+      if (alreadyApproved) {
+        payload.id = JSON.parse(localStorage.getItem("user")).id;
+        payload.status = "approved";
+        response = await UpdateDoctor(payload);
+      } else {
+        response = await AddDoctor(payload);
+      }
+
       if (response.success) {
         message.success(response.message);
-        navigate('/profile');
+        navigate("/profile");
       } else {
         message.error(response.message);
       }
-  
-    } catch (error) {
-      message.error(error.message);
-    } finally {
       dispatch(showLoader(false));
+    } catch (error) {
+      dispatch(showLoader(false));
+      message.error(error.message);
     }
   };
+
+  const checkIfAlreadyApplied = async () => {
+    try {
+      dispatch(showLoader(true));
+      const response = await CheckIfDoctorAccountIsApplied(
+        JSON.parse(localStorage.getItem("user")).id
+      );
+      if (response.success) {
+        setAlreadyApplied(true);
+        if (response.data.status === "approved") {
+          setAlreadyApproved(true);
+          form.setFieldsValue(response.data);
+          setDays(response.data.days);
+        }
+      } else {
+        setAlreadyApplied(false);
+      }
+      dispatch(showLoader(false));
+    } catch (error) {
+      dispatch(showLoader(false));
+      message.error(error.message);
+    }
+  };
+
+  useEffect(() => {
+    checkIfAlreadyApplied();
+  }, []);
   return (
     <div className="bg-white p-2">
-      <h3 className="uppercase my-1">Apply For a Doctor!</h3>
-      <hr />
+      {(!alreadyApplied || alreadyApproved) && (
+        <>
+          {" "}
+          <h3 className="uppercase my-1">
+            {alreadyApproved ? "Update your information" : "Apply as a doctor"}
+          </h3>
+          <hr />
+          <Form
+            layout="vertical"
+            className="my-1"
+            onFinish={onFinish}
+            form={form}
+          >
+            <Row gutter={[16, 16]}>
+              {/* personal information */}
 
-      <Form
-        layout="vertical"
-        className="my-1"
-        onFinish={onFinish}
-        autoComplete="off"
-      >
-        <Row gutter={[16, 16]}>
-          {/* Personal Information */}
-          <Col span={24}>
-            <h3 className="uppercase">
-              <b>Personal Information</b>
-            </h3>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="First Name"
-              name="firstname"
-              rules={[
-                { required: true, message: "Required Field" },
-                { pattern: /^[a-zA-Z]+$/, message: "Only letters are allowed" },
-              ]}
-            >
-              <input type="text" placeholder="Enter your first name" />
-            </Form.Item>
-          </Col>
+              <Col span={24}>
+                <h4 className="uppercase">
+                  <b>Personal Information</b>
+                </h4>
+              </Col>
+              <Col span={8}>
+                <Form.Item
+                  label="First Name"
+                  name="firstName"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Required",
+                    },
+                  ]}
+                >
+                  <input type="text" />
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item
+                  label="Last Name"
+                  name="lastName"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Required",
+                    },
+                  ]}
+                >
+                  <input type="text" />
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item
+                  label="Email"
+                  name="email"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Required",
+                    },
+                  ]}
+                >
+                  <input type="email" />
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item
+                  label="Phone"
+                  name="phone"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Required",
+                    },
+                  ]}
+                >
+                  <input type="number" />
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item
+                  label="Website"
+                  name="website"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Required",
+                    },
+                  ]}
+                >
+                  <input type="text" />
+                </Form.Item>
+              </Col>
+              <Col span={24}>
+                <Form.Item
+                  label="Address"
+                  name="address"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Required",
+                    },
+                  ]}
+                >
+                  <textarea type="text" />
+                </Form.Item>
+              </Col>
 
-          <Col span={8}>
-            <Form.Item
-              label="Last Name"
-              name="lastname"
-              rules={[
-                { required: true, message: "Required Field" },
-                { pattern: /^[a-zA-Z]+$/, message: "Only letters are allowed" },
-              ]}
-            >
-              <input type="text" placeholder="Enter your last name" />
-            </Form.Item>
-          </Col>
+              <Col span={24}>
+                <hr />
+              </Col>
 
-          <Col span={8}>
-            <Form.Item
-              label="Email"
-              name="email"
-              rules={[
-                { required: true, message: "Required Field" },
-                { type: "email", message: "Enter a valid email address" },
-              ]}
-            >
-              <input type="email" placeholder="Enter your email" />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Phone Number"
-              name="phone"
-              rules={[
-                { required: true, message: "Required Field" },
-                { pattern: /^[0-9]{10}$/, message: "Enter a valid 10-digit number" },
-              ]}
-            >
-              <input type="number" placeholder="Enter your phone number" />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Website"
-              name="website"
-              rules={[
-                { required: true, message: "Required Field" },
-                { type: "url", message: "Enter a valid URL" },
-              ]}
-            >
-              <input type="text" placeholder="Enter your website" />
-            </Form.Item>
-          </Col>
-          <Col span={24}>
-            <Form.Item
-              label="Address"
-              name="address"
-              rules={[
-                { required: true, message: "Required Field" },
-              ]}
-            >
-              <textarea
-                type="text"
-                placeholder="Enter your address"
-                rows={3}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={24}>
-            <hr />
-          </Col>
+              {/* professional information */}
+              <Col span={24}>
+                <h4 className="uppercase">
+                  <b>Professional Information</b>
+                </h4>
+              </Col>
+              <Col span={8}>
+                <Form.Item
+                  label="Speciality"
+                  name="speciality"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Required",
+                    },
+                  ]}
+                >
+                  <select>
+                    <option value="dermetologist">Dermetologist</option>
+                    <option value="cardiologist">Cardiologist</option>
+                    <option value="gynecologist">Gynecologist</option>
+                    <option value="neurologist">Neurologist</option>
+                    <option value="orthopedic">Orthopedic</option>
+                    <option value="pediatrician">Pediatrician</option>
+                    <option value="psychiatrist">Psychiatrist</option>
+                    <option value="surgeon">Surgeon</option>
+                    <option value="urologist">Urologist</option>
+                  </select>
+                </Form.Item>
+              </Col>
 
-          {/* Professional Information */}
-          <Col span={24}>
-            <h3 className="uppercase">
-              <b>Professional Information</b>
-            </h3>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Specialization"
-              name="specialization"
-              rules={[
-                { required: true, message: "Required Field" },
-              ]}
-            >
-              <select>
-                <option value="">Select Specialization</option>
-                <option value="general">General</option>
-                <option value="dental">Dental</option>
-                <option value="cardiologist">Cardiologist</option>
-                <option value="neurologist">Neurologist</option>
-                <option value="surgeon">Surgeon</option>
-                <option value="pediatrician">Pediatrician</option>
-                <option value="dermatologist">Dermatologist</option>
-                <option value="gynecologist">Gynecologist</option>
-                <option value="orthopedic">Orthopedic</option>
-              </select>
-            </Form.Item>
-          </Col>
+              <Col span={8}>
+                <Form.Item
+                  label="Experience"
+                  name="experience"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Required",
+                    },
+                  ]}
+                >
+                  <input type="number" />
+                </Form.Item>
+              </Col>
 
-          <Col span={8}>
-            <Form.Item
-              label="Experience (in years)"
-              name="experience"
-              rules={[
-                { required: true, message: "Required Field" },
-           
-              ]}
-            >
-              <input type="number" placeholder="Enter years of experience" />
-            </Form.Item>
-          </Col>
+              <Col span={8}>
+                <Form.Item
+                  label="Qualification"
+                  name="qualification"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Required",
+                    },
+                  ]}
+                >
+                  <select>
+                    <option value="MBBS">MBBS</option>
+                    <option value="MD">MD</option>
+                    <option value="MS">MS</option>
+                    <option value="MDS">MDS</option>
+                  </select>
+                </Form.Item>
+              </Col>
 
-          <Col span={8}>
-            <Form.Item
-              label="Qualification"
-              name="qualification"
-              rules={[
-                { required: true, message: "Required Field" },
-              ]}
-            >
-              <select>
-                <option value="">Select Qualification</option>
-                <option value="mbbs">MBBS</option>
-                <option value="mds">MDS</option>
-                <option value="md">MD</option>
-                <option value="ms">MS</option>
-              </select>
-            </Form.Item>
-          </Col>
+              <Col span={24}>
+                <hr />
+              </Col>
 
-          <Col span={24}>
-            <hr />
-          </Col>
+              <Col span={24}>
+                <h4 className="uppercase">
+                  <b>Work Hours</b>
+                </h4>
+              </Col>
+              {/* work hours */}
+              <Col span={8}>
+                <Form.Item
+                  label="Start Time"
+                  name="startTime"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Required",
+                    },
+                  ]}
+                >
+                  <input type="time" />
+                </Form.Item>
+              </Col>
 
-          {/* Work Hours */}
-          <Col span={24}>
-            <h3 className="uppercase">
-              <b>Work Hours</b>
-            </h3>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Start Time"
-              name="startTime"
-              rules={[
-                { required: true, message: "Required Field" },
-              ]}
-            >
-              <input type="time" />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="End Time"
-              name="endTime"
-              rules={[
-                { required: true, message: "Required Field" },
-              ]}
-            >
-              <input type="time" />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Fee (in USD)"
-              name="fee"
-              rules={[
-                { required: true, message: "Required Field" },
-              
-              ]}
-            >
-              <input type="number" placeholder="Enter consultation fee" />
-            </Form.Item>
-          </Col>
-          <Col span={24}>
-            <div className="flex gap-2">
-              {[
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday",
-                "Sunday",
-              ].map((day, index) => (
-                <div className="flex items-center" key={index}>
-                  <input
-                    type="checkbox"
-                    name={day}
-                    value={day}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setDays([...days, e.target.value]);
-                      } else {
-                        setDays(days.filter((item) => item !== e.target.value));
-                      }
-                    }}
-                  />
-                  <label>{day}</label>
+              <Col span={8}>
+                <Form.Item
+                  label="End Time"
+                  name="endTime"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Required",
+                    },
+                  ]}
+                >
+                  <input type="time" />
+                </Form.Item>
+              </Col>
+
+              <Col span={8}>
+                <Form.Item
+                  label="Fee"
+                  name="fee"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Required",
+                    },
+                  ]}
+                >
+                  <input type="number" />
+                </Form.Item>
+              </Col>
+
+              <Col span={24}>
+                <div className="flex gap-2">
+                  {[
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                    "Sunday",
+                  ].map((day, index) => (
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        key={index}
+                        checked={days.includes(day)}
+                        value={day}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setDays([...days, e.target.value]);
+                          } else {
+                            setDays(
+                              days.filter((item) => item !== e.target.value)
+                            );
+                          }
+                        }}
+                      />
+                      <label>{day}</label>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </Col>
+            </Row>
+
+            <div className="flex justify-end gap-2">
+              <button className="outlined-btn" type="button">
+                CANCEL
+              </button>
+              <button className="contained-btn" type="submit">
+                SUBMIT
+              </button>
             </div>
-          </Col>
-        </Row>
-        <div className="flex justify-end gap-2">
-          <button className="outlined-btn" type="button">
-            CANCEL
-          </button>
-          <button className="contained-btn" type="submit">
-            SUBMIT
-          </button>
+          </Form>
+        </>
+      )}
+
+      {alreadyApplied && !alreadyApproved && (
+        <div className="flex flex-col items-center gap-2">
+          <h3 className="text-secondary">
+            You have already applied for this doctor account , please wait for
+            the admin to approve your request
+          </h3>
         </div>
-      </Form>
+      )}
     </div>
   );
 }
